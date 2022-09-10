@@ -1,6 +1,0 @@
-View(Rainfall_data)
-attach(Rainfall_data)
-head(Rainfall_data)
-tail(Rainfall_data)
-summary(Rainfall_data)
-plot(Specific.Humidity,Temperature,main = scatterplot)
