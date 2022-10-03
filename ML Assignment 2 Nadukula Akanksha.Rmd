@@ -1,0 +1,119 @@
+---
+title: "ML2- Nadukula Akanksha "
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+date: '2022-10-02'
+---
+---
+title: "Assignment2 Nadukula Akanksha"
+date: "2022-10-02"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, }
+
+library('caret')
+library('ISLR')
+library('dplyr')
+library('class')
+
+BankData <- read.csv("UniversalBank.csv" )
+
+BankData$ID <- NULL
+BankData$ZIP.Code <- NULL
+summary(BankData)
+
+#Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and Credit Card = 1. Perform a k-NN classification with all predictors except ID and ZIP code using k = 1. Remember to transform categorical predictors with more than two categories into dummy variables first. Specify the success class as 1 (loan acceptance), and use the default cutoff value of 0.5.
+
+BankData$Personal.Loan =  as.factor(BankData$Personal.Loan)
+
+
+Normalized_model <- preProcess(BankData[,-8],method = c("center", "scale"))
+Bank_normalized <- predict(Normalized_model,BankData)
+summary(Bank_normalized)
+
+
+
+Train_index <- createDataPartition(BankData$Personal.Loan, p = 0.6, list = FALSE)
+train.df = Bank_normalized[Train_index,]
+validation.df = Bank_normalized[-Train_index,]
+
+
+To_Predict = data.frame(Age = 40, Experience = 10, Income = 84, Family = 2,
+                        CCAvg = 2, Education = 1, Mortgage = 0, Securities.Account =
+                          0, CD.Account = 0, Online = 1, CreditCard = 1)
+print(To_Predict)
+To_Predict_Normalized <- predict(Normalized_model,To_Predict)
+
+Prediction <- knn(train= train.df[,1:7,9:12],
+                  test = To_Predict_Normalized[,1:7,9:12],
+                  cl= train.df$Personal.Loan,
+                  k=1)
+print(Prediction)
+
+
+
+#Question 2 
+#What is a choice of k that balances between overfitting and ignoring the predictor information?
+set.seed(123)
+Bankcontrol <- trainControl(method= "repeatedcv", number = 3, repeats = 2)
+searchGrid = expand.grid(k=1:10)
+
+knn.model = train(Personal.Loan~., data = train.df, method = 'knn', tuneGrid = searchGrid,trControl = Bankcontrol)
+
+knn.model
+
+
+
+#Question3
+
+#Show the confusion matrix for the validation data that results from using the best k. 
+
+predictions <- predict(knn.model,validation.df)
+
+confusionMatrix(predictions,validation.df$Personal.Loan)
+
+
+#Question4
+
+To_Predict_Normalization = data.frame(Age = 40, Experience = 10, Income = 84, Family = 2,
+                                      CCAvg = 2, Education = 1, Mortgage = 0,
+                                      Securities.Account =0, CD.Account = 0, Online = 1,
+                                      CreditCard = 1)
+To_Predict_Normalization = predict(Normalized_model, To_Predict)
+predict(knn.model, To_Predict_Normalization)
+
+
+
+#Question5
+#Repartition the data, this time into training, validation, and test sets (50% : 30% : 20%). Apply the k-NN method with the k chosen above. Compare the confusion matrix of the test set with that of the training and validation sets.
+train_size = 0.5
+Train_index = createDataPartition(BankData$Personal.Loan, p = 0.5, list = FALSE)
+train.df = Bank_normalized[Train_index,]
+
+
+test_size = 0.2
+Test_index = createDataPartition(BankData$Personal.Loan, p = 0.2, list = FALSE)
+Test.df = Bank_normalized[Test_index,]
+
+
+valid_size = 0.3
+Validation_index = createDataPartition(BankData$Personal.Loan, p = 0.3, list = FALSE)
+validation.df = Bank_normalized[Validation_index,]
+
+
+
+Testknn <- knn(train = train.df[,-8], test = Test.df[,-8], cl = train.df[,8], k =3)
+Validationknn <- knn(train = train.df[,-8], test = validation.df[,-8], cl = train.df[,8], k =3)
+Trainknn <- knn(train = train.df[,-8], test = train.df[,-8], cl = train.df[,8], k =3)
+
+confusionMatrix(Testknn, Test.df[,8])
+confusionMatrix(Trainknn, train.df[,8])
+confusionMatrix(Validationknn, validation.df[,8])
+
+```
+
